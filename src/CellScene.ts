@@ -178,12 +178,39 @@ export class CellScene {
   }
 
   private addExtras(type: CellType) {
+    // snapshot the model meshes before we start adding extras, so pore raycasts
+    // hit the wall and not a pore we already placed
+    const wallMeshes = this.pickTargets.slice();
+    this.root.updateMatrixWorld(true);
+
     EXTRAS[type].forEach((ex) => {
       const geo = ex.shape === "capsule"
         ? new THREE.CapsuleGeometry(ex.size * 0.5, ex.size, 8, 16)
+        : ex.shape === "disc"
+        ? new THREE.CircleGeometry(ex.size, 24)
         : new THREE.SphereGeometry(ex.size, 24, 18);
-      const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: ex.color, roughness: 0.5 }));
+      // discs read as holes, so keep them flat-dark instead of lit
+      const mat = ex.shape === "disc"
+        ? new THREE.MeshBasicMaterial({ color: ex.color, side: THREE.DoubleSide })
+        : new THREE.MeshStandardMaterial({ color: ex.color, roughness: 0.5 });
+      const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(...ex.pos);
+      if (ex.shape === "disc") {
+        // Seat the disc flush on the wall. The wall's true normal is up to ~29° off
+        // the radial direction, so orienting radially tilts the disc and one edge
+        // sinks into the wall while the other lifts off it — align to the hit face
+        // normal instead. Falls back to radial if the ray misses.
+        const radial = mesh.position.clone().setY(0).normalize();
+        this.raycaster.set(mesh.position.clone().addScaledVector(radial, 5), radial.clone().negate());
+        const hit = this.raycaster.intersectObjects(wallMeshes, false)[0];
+        const normal = hit
+          ? hit.face!.normal.clone().transformDirection(hit.object.matrixWorld)
+          : radial;
+        if (normal.dot(radial) < 0) normal.negate(); // keep it pointing out of the cell
+        if (hit) mesh.position.copy(hit.point);
+        mesh.position.addScaledVector(normal, 0.02); // just enough to clear z-fighting
+        mesh.lookAt(mesh.position.clone().add(normal));
+      }
       this.root.add(mesh);
       this.pickTargets.push(mesh);
     });

@@ -26,6 +26,7 @@ const server = serve({
   routes: {
     "/models/:name": (req) => serveFrom(MODELS_DIR, req.params.name, "model/gltf-binary"),
     "/assets/:name": (req) => serveFrom(ASSETS_DIR, req.params.name),
+    "/assets/cell/:name": (req) => serveFrom(join(ASSETS_DIR, "cell"), req.params.name),
     "/draco/:name": (req) => serveFrom(DRACO_DIR, req.params.name),
     "/*": index,
   },
