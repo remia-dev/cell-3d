@@ -8,6 +8,7 @@ export function App() {
 
   const [type, setType] = useState<CellType>("animal");
   const [selected, setSelected] = useState<{ a: Annotation; i: number } | null>(null);
+  const [infoOpen, setInfoOpen] = useState(true);
   const [autoRotate, setAutoRotate] = useState(true);
   const [pickMode, setPickMode] = useState(false);
   const [pickedCoord, setPickedCoord] = useState<string | null>(null);
@@ -35,14 +36,16 @@ export function App() {
   useEffect(() => { sceneRef.current?.setAutoRotate(autoRotate); }, [autoRotate]);
   useEffect(() => { sceneRef.current?.setPickMode(pickMode); }, [pickMode]);
 
-  // Escape unfocuses the selected organelle and returns to the centered view
+  // unfocus the selected organelle and return to the centered top view
+  const recenter = () => {
+    setSelected(null);
+    sceneRef.current?.resetView();
+    sceneRef.current?.setAutoRotate(autoRotate);
+  };
+
+  // Escape does the same as the on-screen recenter button (desktop convenience)
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      setSelected(null);
-      sceneRef.current?.resetView();
-      sceneRef.current?.setAutoRotate(autoRotate);
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") recenter(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [autoRotate]);
@@ -72,25 +75,36 @@ export function App() {
         </div>
       </header>
 
-      <div id="info">
-        {selected ? (
-          <>
-            <div className="eyebrow">{isPlant ? "Plant cell" : "Animal cell"} · #{selected.i + 1}</div>
-            <h2>{selected.a.title}</h2>
-            {selected.a.img && <img className="info-img" src={selected.a.img} alt={selected.a.title} />}
-            <p className="desc">{selected.a.desc}</p>
-          </>
-        ) : (
-          <>
-            <div className="eyebrow">{isPlant ? "Plant cell" : "Animal cell"}</div>
-            <h2>{isPlant ? "The plant cell" : "The animal cell"}</h2>
-            <p className="desc">
-              Drag to rotate, scroll to zoom. Click a numbered pin (or a name in the list) to focus it gently and read about it.
-              {annotations.length === 0 && " — No annotations yet. Turn on Place-pin mode, click a spot on the model, and copy the coordinate to author one."}
-            </p>
-          </>
-        )}
-      </div>
+      {selected && (
+        <button className="recenter" onClick={recenter} title="Back to center (Esc)">⟲ Center</button>
+      )}
+
+      {infoOpen ? (
+        <div id="info">
+          <button className="info-close" onClick={() => setInfoOpen(false)} aria-label="Hide info panel" title="Hide">✕</button>
+          {selected ? (
+            <>
+              <div className="eyebrow">{isPlant ? "Plant cell" : "Animal cell"} · #{selected.i + 1}</div>
+              <h2>{selected.a.title}</h2>
+              {selected.a.img && <img className="info-img" src={selected.a.img} alt={selected.a.title} />}
+              <p className="desc">{selected.a.desc}</p>
+            </>
+          ) : (
+            <>
+              <div className="eyebrow">{isPlant ? "Plant cell" : "Animal cell"}</div>
+              <h2>{isPlant ? "The plant cell" : "The animal cell"}</h2>
+              <p className="desc">
+                Drag to rotate, scroll to zoom. Click a numbered pin (or a name in the list) to focus it gently and read about it.
+                {annotations.length === 0 && " — No annotations yet. Turn on Place-pin mode, click a spot on the model, and copy the coordinate to author one."}
+              </p>
+            </>
+          )}
+        </div>
+      ) : (
+        <button className="info-show" onClick={() => setInfoOpen(true)}>
+          ℹ️ {selected ? selected.a.title : "Info"}
+        </button>
+      )}
 
       {annotations.length > 0 && (
         <div id="legend">

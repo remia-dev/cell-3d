@@ -45,10 +45,38 @@ header {
   background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
   backdrop-filter: blur(14px); box-shadow: 0 24px 60px rgba(0,0,0,0.45);
 }
-#info .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 1.4px; color: var(--accent); font-weight: 700; }
+#info .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 1.4px; color: var(--accent); font-weight: 700; padding-right: 26px; }
 #info h2 { font-size: 20px; margin: 6px 0 8px; }
 #info p.desc { font-size: 13.5px; line-height: 1.6; color: #cdd7ef; }
 #info .info-img { width: 100%; border-radius: 10px; margin: 4px 0 10px; background: #fff; display: block; }
+#info .info-close {
+  position: absolute; top: 12px; right: 12px; z-index: 1;
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+  background: rgba(122,162,255,0.12); color: var(--muted); font-size: 15px; line-height: 1;
+  cursor: pointer; transition: 0.15s;
+}
+#info .info-close:hover { background: rgba(122,162,255,0.24); color: var(--text); }
+
+/* floating button to reopen the info card after it's hidden */
+.info-show {
+  position: fixed; top: 74px; right: 18px; z-index: 15; max-width: calc(100vw - 36px);
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 999px;
+  padding: 10px 16px; color: var(--text); font: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; backdrop-filter: blur(14px); box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+}
+.info-show:hover { border-color: var(--accent); }
+
+/* floating button to unfocus and return to the centered view (the on-screen Esc) */
+.recenter {
+  position: fixed; top: 74px; left: 18px; z-index: 15;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 999px;
+  padding: 10px 16px; color: var(--text); font: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; backdrop-filter: blur(14px); box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+}
+.recenter:hover { border-color: var(--accent); }
 
 #legend {
   position: fixed; bottom: 18px; left: 18px; z-index: 15; width: 250px; max-width: calc(100vw - 36px);
@@ -111,7 +139,25 @@ header {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 720px) {
-  #legend { display: none; }
-  #info { width: 250px; top: 118px; }
-  header { flex-direction: column; gap: 12px; align-items: stretch; }
+  header { flex-direction: column; gap: 10px; align-items: stretch; padding: 10px 12px; }
+  .brand h1 { font-size: 15px; }
+  .toggle { justify-content: center; }
+  .toggle button { flex: 1; padding: 9px 10px; }
+
+  /* info becomes a bottom sheet spanning the width */
+  #info {
+    top: auto; bottom: 10px; left: 10px; right: 10px; width: auto; max-width: none;
+    max-height: 48vh; overflow-y: auto; padding: 16px 16px 18px; border-radius: 14px;
+  }
+  #info h2 { font-size: 18px; }
+  #info .info-img { max-height: 30vh; width: auto; max-width: 100%; margin-inline: auto; }
+
+  /* reopen pill sits bottom-right, out of the model's way */
+  .info-show { top: auto; bottom: 12px; right: 12px; }
+
+  /* recenter sits just under the stacked header, clear of the bottom sheet */
+  .recenter { top: 110px; left: 12px; }
+
+  /* authoring tools + legend are desktop-only; keep the small screen clean */
+  #legend, #controls { display: none; }
 }
